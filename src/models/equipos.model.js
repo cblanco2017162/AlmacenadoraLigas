@@ -4,8 +4,8 @@ const Schema = mongoose.Schema;
 const EquipoSchema = Schema({
     nombre: String,
     puntos: Number,
-    idUsuario: { type: Schema.Types.ObjectId, ref: 'Usuarios' },
-    idTorneo: { type: Schema.Types.ObjectId, ref: 'Torneos' }
+    torneoPertenece : String,
+    idUsuario: { type: Schema.Types.ObjectId, ref: 'Usuarios' }
 });
 
 module.exports = mongoose.model('Equipos', EquipoSchema);

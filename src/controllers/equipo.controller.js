@@ -4,11 +4,11 @@ function agregarEquipos(req, res){
     var parametros = req.body;
     var equipoModelo = new Equipos
     
-    if( parametros.nombre && parametros.puntos) {
+    if( parametros.nombre  && parametros.torneoPertenece) {
          equipoModelo.nombre = parametros.nombre;
-         equipoModelo.apellido = 0;
+         equipoModelo.puntos = 0;
+         equipoModelo.torneoPertenece = parametros.torneoPertenece;
          equipoModelo.idUsuario = req.user.sub;
-         equipoModelo.idTorneo = req.user.sub;
 
                  equipoModelo.save((err, equipoGuardado) => {
                        if(err) return res.status(500).send({ mensaje: "Error en la peticion" });

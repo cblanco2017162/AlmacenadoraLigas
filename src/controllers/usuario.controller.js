@@ -3,24 +3,37 @@ const underscore = require('underscore');
 const bcrypt = require('bcrypt-nodejs');
 const jwt = require('../services/jwt')
 
-function registrar(req, res) {
+function registrarCliente(req, res) {
     var parametros = req.body;
-    var usuarioModelo = new Usuario;
-    Usuario.findOne({ usuario: parametros.usuario }, (err, ususarioEncontrado) => {
-        if (underscore.isEmpty(usuarioEncontrado)) {
-            usuarioModelo.nombre = parametros.nombre;
-            usuarioModelo.email = parametros.email;
-            usuarioModelo.rol = 'CLIENTE';
-            bcrypt.hash(parametros.password, null, null, (err, passwordEncriptada) => {
-                usuarioModelo.password = passwordEncriptada
-                usuarioModelo.save((err, usuarioGuardado) => {
-                    return res.status(200).send({ Usuario: usuarioGuardado })
-                });
+    var usuarioModel = new Usuario();
+
+    if(parametros.nombre && parametros.email && parametros.password) {
+            usuarioModel.nombre = parametros.nombre;
+            usuarioModel.email = parametros.email;
+            usuarioModel.rol = 'CLIENTE';
+            usuarioModel.imagen = null;
+
+            Usuario.find({ email : parametros.email }, (err, usuarioEncontrado) => {
+                if ( usuarioEncontrado.length == 0 ) {
+
+                    bcrypt.hash(parametros.password, null, null, (err, passwordEncriptada) => {
+                        usuarioModel.password = passwordEncriptada;
+
+                        usuarioModel.save((err, usuarioGuardado) => {
+                            if (err) return res.status(500)
+                                .send({ mensaje: 'Error en la peticion' });
+                            if(!usuarioGuardado) return res.status(500)
+                                .send({ mensaje: 'Error al agregar el Usuario'});
+                            
+                            return res.status(200).send({ usuario: usuarioGuardado });
+                        });
+                    });                    
+                } else {
+                    return res.status(500)
+                        .send({ mensaje: 'Este correo, ya  se encuentra utilizado' });
+                }
             })
-        } else {
-            return res.status(500).send({ mensaje: "El el correo ya esta en uso, utilice uno diferente" })
-        }
-    })
+    }
 }
 
 
@@ -51,35 +64,34 @@ function creacionAdmin() {
 
 function login(req, res) {
     var parametros = req.body;
-    Empresa.findOne({ usuario: parametros.usuario }, (err, empresaEncontrada) => {
-        if (err) return res.status(500).send({ mensaje: 'Error en la peticion' });
-        if (empresaEncontrada) {
-            bcrypt.compare(parametros.password, empresaEncontrada.password,
-                (err, verificacionPassword) => {
-                    if (verificacionPassword) {
-                        if (parametros.obtenerToken === 'true') {
+    Usuario.findOne({ email : parametros.email }, (err, usuarioEncontrado)=>{
+        if(err) return res.status(500).send({ mensaje: 'Error en la peticion' });
+        if(usuarioEncontrado){
+            bcrypt.compare(parametros.password, usuarioEncontrado.password, 
+                (err, verificacionPassword)=>{
+                    if ( verificacionPassword ) {
+                        if(parametros.obtenerToken === 'true'){
                             return res.status(200)
-                                .send({ token: jwt.crearToken(empresaEncontrada) })
+                                .send({ token: jwt.crearToken(usuarioEncontrado) })
                         } else {
-                            empresaEncontrada.password = undefined;
-                            return res.status(200)
-                                .send({ empresa: empresaEncontrada })
-                        }
-
+                            usuarioEncontrado.password = undefined;
+                            return  res.status(200)
+                                .send({ usuario: usuarioEncontrado })
+                        }     
                     } else {
                         return res.status(500)
-                            .send({ mensaje: 'La clave no coincide' });
+                            .send({ mensaje: 'Las contrasena no coincide'});
                     }
                 })
         } else {
             return res.status(500)
-                .send({ mensaje: 'Error, el usuario no se encuentra registrado.' })
+                .send({ mensaje: 'Error, el correo no se encuentra registrado.'})
         }
     })
 }
 
 module.exports={
-    registrar,
+    registrarCliente,
     creacionAdmin,
     login
 }
