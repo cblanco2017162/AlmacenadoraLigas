@@ -3,9 +3,13 @@ const Schema = mongoose.Schema;
 
 const EquipoSchema = Schema({
     nombre: String,
+    golesAfavor:Number,
+    golesEnContra:Number,
+    diferencia:Number,
     puntos: Number,
-    torneoPertenece : String,
-    idUsuario: { type: Schema.Types.ObjectId, ref: 'Usuarios' }
+    idUsuario: { type: Schema.Types.ObjectId, ref: 'Usuarios' },
+    idTorneo:{type:Schema.Types.ObjectId, ref:'Torneos'}
 });
 
 module.exports = mongoose.model('Equipos', EquipoSchema);
+

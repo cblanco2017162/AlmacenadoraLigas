@@ -90,8 +90,68 @@ function login(req, res) {
     })
 }
 
+function editarUsuario(req, res) {
+    var idUser = req.params.idUsuario;
+    var parametros = req.body;    
+
+ Usuario.findOne({_id:idUser},(err,usuarioEncontrado)=>{
+            if(err) return res.status(500).send({mensaje: "Error, el usuario no existe. Verifique el ID"});
+            if(!usuarioEncontrado) return res.status(404).send({mensaje: "Error, el usuario no existe. Verifique el ID"})    
+   
+            if(usuarioEncontrado.rol == 'CLIENTE'){
+            Usuario.findByIdAndUpdate(idUser, parametros, {new : true},
+              (err, usuarioActualizado)=>{
+              if(err) return res.status(500).send({ mensaje: 'Error en la peticion' });
+              if(!usuarioActualizado) return res.status(500).send({ mensaje: 'Error al editar el Usuario'});
+            
+             return res.status(200).send({usuario : usuarioActualizado})
+        })
+    }else{
+        return res.status(500).send({ mensaje: "No puede editar los administradores" });
+      }
+    })
+}
+
+function eliminarUsuario(req, res){
+     var idUser = req.params.idUsuario;
+     Usuario.findOne({_id:idUser},(err,usuarioEncontrado)=>{
+        if(err) return res.status(500).send({mensaje: "Error, el usuario no existe. Verifique el ID"});
+        if(!usuarioEncontrado) return res.status(404).send({mensaje: "Error, el usuario no existe. Verifique el ID"})
+ 
+        if(usuarioEncontrado.rol == "CLIENTE"){
+         Usuario.findByIdAndDelete(idUser,(err,usuarioEliminado)=>{
+                   if(err) return res.status(500).send({mensaje: "Error, el usuario no existe"});
+                   if(!usuarioEliminado) return res.status(404).send({mensaje: "Error, el usuario no existe"})
+           
+                   return  res.status(200).send({usuario:usuarioEliminado});
+               })
+     }else{
+          return res.status(500).send({ mensaje: 'No puede eliminar administradores'});
+     }
+    })
+}
+
+
+//El propio usuario puede editar su cuenta
+function editarseUsuario(req,res){
+    var idUsuario = req.params.idUsuario; 
+    var parametros = req.body; 
+
+    if ( idUsuario !== req.user.sub ) return res.status(500).send({ mensaje: 'No puede editar otros usuarios'});
+
+    Usuario.findByIdAndUpdate({_id: idUsuario},parametros,{new:true},(err, cuentaEditada)=>{
+        if(err) return res.status(500).send({mensaje:'Error en la peticion'});
+        if(!cuentaEditada) return res.status(404).send({mensaje:'Error al editar la cuenta'});
+
+        return res.status(500).send({usuario: cuentaEditada});
+    })
+}
+
 module.exports={
     registrarCliente,
     creacionAdmin,
-    login
+    login,
+    editarUsuario,
+    eliminarUsuario,
+    editarseUsuario
 }
